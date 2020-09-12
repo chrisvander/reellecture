@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "concurrently \"cd backend && nodemon server.js\" \"cd frontend && npm start\"",
-    "deploy": ""
+    "deploy": "",
+    "postinstall": "cd frontend && npm install && cd ../backend && npm install"
   },
   "repository": {
     "type": "git",
