@@ -7,7 +7,7 @@ import {
 
 function App() {
   return (
-    <Container className="App">
+    <Container>
       Hello!
       <Button>hello</Button>
     </Container>
