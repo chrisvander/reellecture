@@ -35,6 +35,7 @@ mongoose.connect('mongodb://localhost/ReelLecture',
 
 User.find({ }).exec((err, docs) => console.log(docs))
 
+app.get('/', (req, res) => res.sendFile(path.resolve('public', 'home.html')));
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -45,8 +46,6 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 app.use(cookieParser());
-
-app.get('/', (req, res) => res.sendFile(path.resolve('public', 'home.html')));
 
 const apiRouter = express.Router()
 app.use('/api', apiRouter);
@@ -156,6 +155,7 @@ apiRouter.get('/analytics',  (req, res) => {
 
 apiRouter.post('/photo', upload.single('photo'), (req, res) => {
   imageRequest(req.file.buffer, data => {
+    console.log(data)
     res.send(data); 
     calcValues(data, req.user.name); 
   });

@@ -63,6 +63,7 @@ class VideoChat extends React.Component {
       });
 
     window.addEventListener('beforeunload', this.handleLeavePage.bind(this));
+
     
   }
 
@@ -116,8 +117,10 @@ class VideoChat extends React.Component {
 
     let videoTracks = []
     tracks.forEach(el => {
-      let vid = <video style={{ width: '100%', transform: 'scaleX(-1)', display: el.kind === 'video' ? 'initial' : 'none' }} ref={r => el.attach(r)} />;
-      videoTracks.push(vid);
+      if (el.kind === 'video') {
+        let vid = <video style={{ width: '100%', transform: 'scaleX(-1)', display: el.kind === 'video' ? 'initial' : 'none' }} ref={r => el.attach(r)} />;
+        videoTracks.push(vid);
+      }
     });
 
     this.setState({ mainTrack, mainTrackDisplay, tracks, videoTracks, participants });

@@ -6,6 +6,10 @@ import AnalysisComponent from '../component/analysis';
 import Nav from './nav';
 
 class AnalysisPage extends React.Component {
+    state = {
+        analytics: null
+    }
+    
     componentDidMount() {
         fetch("/api/analytics")
             .then(res => res.json())
