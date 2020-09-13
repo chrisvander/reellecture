@@ -20,6 +20,7 @@ class Login extends React.Component {
   }
 
   render() {
+    console.log(this.props.match)
     return (
       <Container>
         <br />

@@ -12,7 +12,8 @@ class PrivateRoute extends React.Component {
             .then(res => res.json())
             .then(res => {
                 this.setState({ authorized: res.loggedIn, waiting: false })
-            });
+            })
+            .catch(err => this.setState({ authorized: false, waiting: false }));
     }
 
     render() {

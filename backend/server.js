@@ -8,20 +8,29 @@ const LocalStrategy = require('passport-local').Strategy;
 const User = require('./model/User');
 const token = require('./twilio-token');
 const cookieParser = require('cookie-parser');
+const multer  = require('multer');
+const upload = multer()
+const app = express();
+
+const imageRequest = require('./aws');
 
 mongoose.connect('mongodb://localhost/ReelLecture',
   { useNewUrlParser: true, useUnifiedTopology: true });
 
-const username = "admin"
-const password = "admin"
+let student = 'student';
+let password = 'password';
+let s = new User({ username: 'sabhya@gmail.com', name: 'Sabhya', role: student });
+s.setPassword(password).then(() => s.save());
 
-User.findOneAndDelete({ username }, async (err, res) => {
-  let user = new User({ username });
-  await user.setPassword(password);
-  await user.save()
-});
+let c = new User({ username: 'chris@gmail.com', name: 'Chris', role: 'instructor' });
+c.setPassword(password).then(() => c.save());
 
-const app = express();
+let a = new User({ username: 'alex@gmail.com', name: 'Alex', role: 'instructor' });
+a.setPassword(password).then(() => a.save());
+
+let am = new User({ username: 'amanda@gmail.com', name: 'Amanda', role: student });
+am.setPassword(password).then(() => am.save());
+
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({ secret: 'keyboard cat' }));
@@ -32,13 +41,75 @@ passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 app.use(cookieParser());
 
+app.get('/', (req, res) => res.sendFile(path.resolve('public', 'home.html')));
+
 const apiRouter = express.Router()
 app.use('/api', apiRouter);
 
 apiRouter.get('/', (req, res) => {
   res.send({ api: 'active', loggedIn: req.isAuthenticated() });
 });
-apiRouter.post('/login', passport.authenticate('local', { successRedirect: '/user' }));
+
+let analytics = {
+  eyesClosed: {},
+  happy: {},
+  sad: {},
+  angry: {},
+  confused: {},
+  disgusted: {},
+  surprised: {},
+  calm: {},
+  fear: {},
+  absent: {}
+}
+
+calcValues = (data, name) => {
+  data.FaceDetails.forEach(element => {
+    if (element.length == 0) {
+      if (analytics['absent'][name]) analytics['absent'][name] += 1; 
+      else analytics['absent'][name] = 1; 
+    }
+    if (!element.EyesOpen.Value) {
+      if (analytics['eyesClosed'][name]) analytics['eyesClosed'][name] += 1; 
+      else analytics['eyesClosed'][name] = 1; 
+    }
+    let max = 0.0; 
+    let topEmotion = "";
+    element.Emotions.forEach(emotion => {
+      if (emotion.Confidence > max) {
+        topEmotion = emotion.Type; 
+        max = emotion.Confidence; 
+      }
+    })
+    if (analytics[topEmotion] === undefined) analytics[topEmotion] = {};
+    if (analytics[topEmotion][name] === undefined) {
+      analytics[topEmotion][name] = 0
+    }
+    analytics[topEmotion][name] += 1;  
+  }); 
+  // data.FaceDetails.forEach(element => console.log(element)); 
+}; 
+
+apiRouter.post('/register', async (req, res) => {
+  let newUser = new User({ 
+    name: req.body.name, 
+    email: req.body.email,
+    password: req.body.password,
+    role: req.body.role 
+  });
+  let doc = await newUser.save();
+  res.send(doc);
+});
+
+apiRouter.post('/login', passport.authenticate('local', { 
+  successRedirect: '/user', 
+  failureRedirect: '/login' 
+}));
+
+apiRouter.get('/logout', (req, res) => {
+  req.logout();
+  res.send("success");
+});
 
 apiRouter.use((req, res, next) => {
   if (req.isAuthenticated())
@@ -48,14 +119,57 @@ apiRouter.use((req, res, next) => {
   }
 });
 
-apiRouter.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/login')
+apiRouter.get('/analytics/stream',  (req, res) => {
+  if (req.user.role !== 'instructor') res.status(401).send("Unauthorized, instructor route");
+  res.set({
+    'Cache-Control': 'no-cache',
+    'Content-Type': 'text/event-stream',
+    'Connection': 'keep-alive'
+  });
+  res.flushHeaders();
+
+  // Tell the client to retry every 10 seconds if connectivity is lost
+  res.write('retry: 1000\n\n');
+
+  let timeout = setInterval(() => {
+    console.log("STREAMING")
+    const id = 3434
+    res.write(`data:This is event ${id}.`);
+    res.write('\n\n');
+  }, 1000);
+
+  res.on("close", () => {
+    clearInterval(timeout);
+    res.end();
+  });
 });
 
-apiRouter.get('/token', (req, res) => {
-  res.send({ jwt: token(req.user.username) });
+apiRouter.get('/analytics',  (req, res) => {
+  if (req.user.role !== 'instructor') res.status(401).send("Unauthorized, instructor route");
+  res.send(analytics);
 });
+
+apiRouter.post('/photo', upload.single('photo'), (req, res) => {
+  imageRequest(req.file.buffer, data => {
+    res.send(data); 
+    calcValues(data, req.user.name); 
+  });
+});
+
+apiRouter.get('/user', (req, res) => {
+  let { username, name, role } = req.user;
+  res.send({ username, name, role });
+});
+
+apiRouter.get('/token/:id', (req, res) => {
+  res.send({ jwt: token(req.user.username, req.params.id) });
+});
+
 
 app.get('*', (req, res) => res.sendFile(path.resolve('public', 'index.html')));
-app.listen(8080, () => console.log("Listening on port 8080"));
+const server = app.listen(8080, () => console.log("Listening on port 8080"));
+// server.on('upgrade', (request, socket, head) => {
+//   socketServer.handleUpgrade(request, socket, head, socket => {
+//     socketServer.emit('connection', socket, request);
+//   });
+// });

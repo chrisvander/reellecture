@@ -1,73 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Container
+  Container,
+  Button
 } from 'react-bootstrap';
-import { connect, createLocalTracks } from 'twilio-video';
+import Nav from './nav';
 
 
-class User extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      token: null,
-      tracks: []
-    }
-    this.participantJoined = this.participantJoined.bind(this);
+function User() {
+  const [userInfo, setUserInfo] = useState({
+    username: '',
+    name: '',
+    role: ''
+  });
 
-    this.mainVideo = React.createRef();
-  }
+  const [sessionName, setSessionName] = useState('');
 
-  componentDidMount() {
-    fetch('/api/token')
+  useEffect(() => {
+    fetch('/api/user')
       .then(res => res.json())
       .then(res => {
-        this.setState({ token: res.jwt }, this.connectRoom);
+        setUserInfo({ username: res.username, name: res.name, role: res.role });
       });
-  }
+  }, []);
 
-  participantJoined(participant) {
-    console.log(`A remote Participant connected: ${participant}`);
-    participant.tracks.forEach(publication => {
-      if (publication.isSubscribed) {
-        const track = publication.track;
-        // document.getElementById('remote-media-div').appendChild(track.attach());
-      }
-    });
-  
-    participant.on('trackSubscribed', track => {
-      // document.getElementById('remote-media-div').appendChild(track.attach());
-    });
-  }
-
-  connectRoom() {
-    connect(this.state.token, {
-      audio: 'true',
-      name: 'LectureOne',
-      video: { width: 1080 }
-    }).then(room => {
-      console.log(`Successfully joined a Room: ${room}`);
-      room.on('participantConnected', this.participantJoined);
-      
-      const localParticipant = room.localParticipant;
-      console.log(`Connected to the Room as LocalParticipant "${localParticipant.identity}"`);
-
-      localParticipant.videoTracks.forEach(publication => {
-        console.log(publication)
-        publication.track.attach(this.mainVideo.current);
-      });
-    }, error => {
-      console.error(`Unable to connect to Room: ${error.message}`);
-    });
-  }
-
-  render() {
-    return (
-      <div>
-        <video ref={this.mainVideo} style={{ width: '100%', height: '100vh', backgroundColor: '#111' }}/>
-      </div>
-    );
-  }
-
+  return (
+    <>
+      <Nav />
+      <Container><br />
+        <h1>Hello, {userInfo.name}!</h1>
+        {userInfo.role === 'instructor' && (
+            <>
+              Session Name: <input type="text" onChange={e => setSessionName(e.target.value)} /><br /><br />
+              <a href={`/video/${sessionName.replace(/[^A-Z0-9]/ig, "_")}`}><Button>Create Session</Button></a>
+            </>
+          )
+        }
+        {userInfo.role === 'student' && (
+            <>
+              Session Name: <input type="text" onChange={e => setSessionName(e.target.value)} /><br /><br />
+              <a href={`/video/${sessionName.replace(/[^A-Z0-9]/ig, "_")}`}><Button>Join Session</Button></a>
+            </>
+          )
+        }
+      </Container>
+    </>
+  )
 }
 
 export default User;
