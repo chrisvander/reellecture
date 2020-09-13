@@ -9,7 +9,7 @@ import Nav from './nav';
 import { connect, createLocalTracks } from 'twilio-video';
 import ws from 'ws';
 import { ImageCapture } from 'image-capture';
-
+import Analysis from '../component/analysis';
 
 class VideoChat extends React.Component {
   constructor(props) {
@@ -127,7 +127,7 @@ class VideoChat extends React.Component {
     connect(this.state.token, {
       audio: 'true',
       name: this.props.match.params.roomID,
-      video: { width: 1080 }
+      video: { width: 1080 },
     }).then(room => this.setState({ room: room }, () => {
         room.on('participantConnected', this.createTracks);
         room.on('participantDisconnected', this.createTracks);
@@ -239,7 +239,7 @@ class VideoChat extends React.Component {
         {role === 'instructor' && 
           <div style={{ position: 'absolute', backgroundColor: 'rgba(255,255,255,0.8)', top: 56, right: 0, width: '300px', height: '100vh', padding: 20 }}>
             <h1>Analytics</h1>
-            {JSON.stringify(analytics)}<br />
+            <Analysis data={analytics} /><br />
             <Button onClick={this.toggleScreen}>{this.state.screen}</Button>
           </div>
         }
@@ -288,5 +288,3 @@ class VideoChat extends React.Component {
 }
   
 export default VideoChat;
-
-

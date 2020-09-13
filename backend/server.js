@@ -17,22 +17,27 @@ const imageRequest = require('./aws');
 mongoose.connect('mongodb://localhost/ReelLecture',
   { useNewUrlParser: true, useUnifiedTopology: true });
 
-let student = 'student';
-let password = 'password';
-let s = new User({ username: 'sabhya@gmail.com', name: 'Sabhya', role: student });
-s.setPassword(password).then(() => s.save());
 
-let c = new User({ username: 'chris@gmail.com', name: 'Chris', role: 'instructor' });
-c.setPassword(password).then(() => c.save());
 
-let a = new User({ username: 'alex@gmail.com', name: 'Alex', role: 'instructor' });
-a.setPassword(password).then(() => a.save());
+// let student = 'student';
+// let password = 'password';
+// let s = new User({ username: 'sabhya@gmail.com', name: 'Sabhya', role: student });
+// s.setPassword(password).then(() => s.save());
 
-let am = new User({ username: 'amanda@gmail.com', name: 'Amanda', role: student });
-am.setPassword(password).then(() => am.save());
+// let c = new User({ username: 'chris@gmail.com', name: 'Chris', role: 'instructor' });
+// c.setPassword(password).then(() => c.save());
+
+// let a = new User({ username: 'alex@gmail.com', name: 'Alex', role: 'instructor' });
+// a.setPassword(password).then(() => a.save());
+
+// let am = new User({ username: 'amanda@gmail.com', name: 'Amanda', role: student });
+// am.setPassword(password).then(() => am.save());
+
+User.find({ }).exec((err, docs) => console.log(docs))
 
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(session({ secret: 'keyboard cat' }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -93,10 +98,10 @@ calcValues = (data, name) => {
 apiRouter.post('/register', async (req, res) => {
   let newUser = new User({ 
     name: req.body.name, 
-    email: req.body.email,
-    password: req.body.password,
+    username: req.body.email,
     role: req.body.role 
   });
+  await newUser.setPassword(req.body.password);
   let doc = await newUser.save();
   res.send(doc);
 });

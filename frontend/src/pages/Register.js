@@ -1,5 +1,6 @@
 import React from 'react'; 
-import Nav from './nav';
+import { Redirect } from 'react-router-dom';
+import Nav from './nav'; 
 
 
 class Register extends React.Component {
@@ -9,8 +10,10 @@ class Register extends React.Component {
             name: '', 
             email: '', 
             password: '', 
-            role: '', 
+            role: 'student', 
+            redirect: false
         }
+        this.onSubmitSignIn = this.onSubmitSignIn.bind(this);
     }
 
     onNameChange = (event) => {
@@ -29,7 +32,7 @@ class Register extends React.Component {
         this.setState({role: event.target.value})
     }
 
-    onSubmitSignIn = () => {
+    onSubmitSignIn() {
         fetch('http://localhost:3000/api/register', {
           method: 'post',
           headers: {'Content-Type': 'application/json'},
@@ -42,15 +45,15 @@ class Register extends React.Component {
         })
           .then(response => response.json())
           .then(user => {
-              console.log(user)
-            if (user.id) {
-              this.props.loadUser(user)
-            //  this.props.onRouteChange('home');
+            if (user._id) {
+              this.setState({ redirect: true });
             }
           })
-      }
+        }
 
     render() {
+        if (this.state.redirect) 
+            return <Redirect to={{ pathname: '/login' }} />
         return (
             <React.Fragment>
                 <Nav />
@@ -76,29 +79,17 @@ class Register extends React.Component {
                         </div>
                         <div className="mv3">
                             <label className="db fw6 lh-copy f6" htmlFor="role">Role</label>
-                            <select name="roles" onChange={this.onRoleChange}> 
-                                <option value="Student"> Student </option>
-                                <option value="Instructor"> Instructor </option>
-                          
-                    <div className="">
-                    <label className="db fw6 lh-copy f6" htmlFor="login"> Already Regsitered? </label>
-                    <input onClick={this.onSubmitSignIn} className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f3 tc dib" type="submit" value="Log In" />
-                    <a href="#0" className="f6 link dim black db">Register</a>
-                    </div>  </select>
+                            <select onChange={this.onRoleChange}> 
+                                <option value="student">Student</option>
+                                <option value="instructor">Instructor</option>
+                            </select>
                         </div>
-                        <div className="">
-                        <input onClick={this.onSubmitSignIn} className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f3 tc dib" type="submit" value="Register" />
+                        <div>
+                            <input onClick={this.onSubmitSignIn} className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f3 tc dib" type="submit" value="Register" />
                         </div>
-                        </fieldset>
-                        {/* <div className="">
-                        <input onClick={this.onSubmitSignIn} className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib" type="submit" value="Register" />
-                        </div> */}
-                        {//<div className="lh-copy mt3">
-                                        //  <a href="#0" className="f6 link dim black db">Register</a>
-                                    // </div>
-                                    }
-                    </div>
-                    </main>
+                    </fieldset>
+                </div>
+                </main>
                 </article>
             </React.Fragment>
         );

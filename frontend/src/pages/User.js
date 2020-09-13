@@ -14,7 +14,7 @@ function User() {
   });
 
   const [sessionName, setSessionName] = useState('');
-
+  console.log(userInfo)
   useEffect(() => {
     fetch('/api/user')
       .then(res => res.json())
@@ -24,7 +24,7 @@ function User() {
   }, []);
 
   return (
-    <>
+    <React.Fragment>
       <Nav />
       <Container><br />
         <h1>Hello, {userInfo.name}!</h1>
@@ -43,7 +43,7 @@ function User() {
           )
         }
       </Container>
-    </>
+    </React.Fragment>
   )
 }
 
